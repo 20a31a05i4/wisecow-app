@@ -48,8 +48,8 @@ jobs:
 
       - name: Deploy to GKE
         run: |
-          kubectl set image deployment/wisecow-deployment wisecow-container=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_REPOSITORY_NAME }}/wisecow:$IMAGE_TAG --namespace=default
-          kubectl rollout status deployment/wisecow-deployment --namespace=default
+          kubectl set image deployment/wisecow wisecow-container=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_REPOSITORY_NAME }}/wisecow:$IMAGE_TAG --namespace=default
+          kubectl rollout status deployment/wisecow --namespace=default
 
       - name: Verify Deployment
         run: kubectl get pods -n default
