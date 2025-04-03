@@ -10,40 +10,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Step 2: Authenticate with GCP using secrets
       - name: Authenticate with GCP
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+      # Step 3: Set up Google Cloud SDK
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          export_default_credentials: true
+          
 
-      - name: Authenticate Docker with GCP Artifact Registry
-        run: |
-          gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+      # Step 4: Authenticate Docker with Artifact Registry
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
 
+      # Step 5: Build and Push Docker Image
       - name: Build and Push Docker Image
         run: |
-          IMAGE_TAG=$(git rev-parse --short HEAD)  # Get short commit hash
+          IMAGE_TAG=$(git rev-parse --short HEAD)
           docker build -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_REPOSITORY_NAME }}/wisecow:$IMAGE_TAG .
           docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_REPOSITORY_NAME }}/wisecow:$IMAGE_TAG
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
+      # Step 6: Connect to GKE Cluster using ZONE instead of REGION
       - name: Connect to GKE Cluster
         run: |
-          gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME }} --region ${{ secrets.GCP_REGION }} --project ${{ secrets.GCP_PROJECT_ID }}
+          gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME }} --zone ${{ secrets.GKE_ZONE }}
 
-      - name: Update Kubernetes Deployment with New Image
+      # Step 7: Deploy to GKE
+      - name: Deploy to GKE
         run: |
           kubectl set image deployment/wisecow-deployment wisecow-container=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_REPOSITORY_NAME }}/wisecow:$IMAGE_TAG --namespace=default
           kubectl rollout status deployment/wisecow-deployment --namespace=default
 
+      # Step 8: Verify Deployment
       - name: Verify Deployment
         run: kubectl get pods -n default
 
