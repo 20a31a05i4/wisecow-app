@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wisecow-service
+spec:
+  selector:
+    app: wisecow
+  ports:
+    - protocol: TCP
+      port: 80         # Exposes the service on port 80 (Ingress will handle HTTPS)
+      targetPort: 4499 # Wisecow app listens on this port inside the container
+  type: ClusterIP      # Keeps the service internal, Ingress will expose it externally

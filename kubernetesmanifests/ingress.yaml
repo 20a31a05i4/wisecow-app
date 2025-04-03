@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wisecow-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"  # Cert-Manager for TLS
+spec:
+  tls:
+  - hosts:
+    - kasi0100.duckdns.org   # Replace with your actual domain (e.g., wisecow.example.com)
+    secretName: wisecow-tls  # TLS certificate secret
+  rules:
+  - host: kasi0100.duckdns.org  # Same domain as above
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: wisecow-service
+            port:
+              number: 80  # Matches the Service port
